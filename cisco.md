@@ -1,303 +1,185 @@
-# Guía de Redes y Subredes en Cisco Packet Tracer
-
-## Índice
-
-1. [Conceptos básicos](#1-conceptos-básicos)
-2. [Direccionamiento IP](#2-direccionamiento-ip)
-3. [Subredes (Subnetting)](#3-subredes-subnetting)
-4. [Topología básica](#4-topología-básica)
-5. [Configuración del Router](#5-configuración-del-router)
-6. [Configuración del Switch](#6-configuración-del-switch)
-7. [Configuración de PCs](#7-configuración-de-pcs)
-8. [DHCP — IPs automáticas](#8-dhcp--ips-automáticas)
-9. [Verificación y diagnóstico](#9-verificación-y-diagnóstico)
-10. [Comandos útiles](#10-comandos-útiles)
+# 📡 Redes Básicas – Máscaras y Configuración en Router
 
 ---
 
-## 1. Conceptos básicos
+# 🔹 Sección 1: Máscaras de Subred y Hosts Disponibles
 
-| Término | Descripción |
-|---|---|
-| **IP Address** | Identificador único de cada dispositivo en la red |
-| **Máscara de subred** | Define qué parte de la IP es red y qué parte es host |
-| **Gateway** | IP del router — puerta de salida de la red |
-| **DHCP** | Protocolo que asigna IPs automáticamente |
-| **DNS** | Traduce nombres de dominio a IPs |
+## 🧠 Concepto
+
+La máscara de subred define cuántos dispositivos (hosts) pueden existir en una red y qué rango de IPs pertenece a la misma red.
 
 ---
 
-## 2. Direccionamiento IP
+## 📊 Tabla de Máscaras Comunes
 
-### Clases de redes
-
-| Clase | Rango | Máscara por defecto | Uso |
-|---|---|---|---|
-| **A** | 1.0.0.0 – 126.255.255.255 | /8 → 255.0.0.0 | Redes muy grandes |
-| **B** | 128.0.0.0 – 191.255.255.255 | /16 → 255.255.0.0 | Redes medianas |
-| **C** | 192.0.0.0 – 223.255.255.255 | /24 → 255.255.255.0 | Redes pequeñas |
-
-### Rangos privados (para uso interno)
-
-| Rango | CIDR |
-|---|---|
-| 10.0.0.0 – 10.255.255.255 | /8 |
-| 172.16.0.0 – 172.31.255.255 | /12 |
-| 192.168.0.0 – 192.168.255.255 | /16 |
+| Máscara de Subred | CIDR | Hosts Disponibles | Rango de IPs por Red          |
+| ----------------- | ---- | ----------------- | ----------------------------- |
+| 255.0.0.0         | /8   | 16,777,214        | 192.0.0.1 - 192.255.255.254   |
+| 255.255.0.0       | /16  | 65,534            | 192.168.0.1 - 192.168.255.254 |
+| 255.255.255.0     | /24  | 254               | 192.168.1.1 - 192.168.1.254   |
+| 255.255.255.128   | /25  | 126               | 192.168.1.1 - 192.168.1.126   |
+| 255.255.255.192   | /26  | 62                | 192.168.1.1 - 192.168.1.62    |
+| 255.255.255.224   | /27  | 30                | 192.168.1.1 - 192.168.1.30    |
+| 255.255.255.240   | /28  | 14                | 192.168.1.1 - 192.168.1.14    |
+| 255.255.255.248   | /29  | 6                 | 192.168.1.1 - 192.168.1.6     |
+| 255.255.255.252   | /30  | 2                 | 192.168.1.1 - 192.168.1.2     |
 
 ---
 
-## 3. Subredes (Subnetting)
+## 🔥 Regla Importante
 
-El subnetting divide una red grande en redes más pequeñas.
+* Siempre se restan 2 direcciones:
 
-### Fórmulas clave
+  * 1 para la red
+  * 1 para broadcast
 
-```
-Hosts por subred  = 2^(bits de host) - 2
-Número de subredes = 2^(bits prestados)
-```
-
-### Tabla de máscaras más usadas
-
-| CIDR | Máscara | Hosts útiles | Subredes de una /24 |
-|---|---|---|---|
-| /24 | 255.255.255.0 | 254 | 1 |
-| /25 | 255.255.255.128 | 126 | 2 |
-| /26 | 255.255.255.192 | 62 | 4 |
-| /27 | 255.255.255.224 | 30 | 8 |
-| /28 | 255.255.255.240 | 14 | 16 |
-| /29 | 255.255.255.248 | 6 | 32 |
-| /30 | 255.255.255.252 | 2 | 64 |
-
-### Ejemplo — dividir 192.168.1.0/24 en 4 subredes (/26)
-
-| Subred | Red | Rango de hosts | Broadcast | Gateway |
-|---|---|---|---|---|
-| 1 | 192.168.1.0/26 | .1 – .62 | .63 | .1 |
-| 2 | 192.168.1.64/26 | .65 – .126 | .127 | .65 |
-| 3 | 192.168.1.128/26 | .129 – .190 | .191 | .129 |
-| 4 | 192.168.1.192/26 | .193 – .254 | .255 | .193 |
-
-> **Regla:** La IP de red y el broadcast **no se asignan** a hosts.
-
----
-
-## 4. Topología básica
+👉 Fórmula:
 
 ```
-PC0 (192.168.1.10)
-    |
-    | Fa0/1 (cable directo)
-    |
-Switch 2960
-    |
-    | G0/1 (cable directo)
-    |
-Router 2911 — G0/0 → 192.168.1.1 (gateway)
-```
-
-### Tipos de cable
-
-| Cable | Cuándo usarlo |
-|---|---|
-| Copper Straight-Through (negro sólido) | PC↔Switch, Switch↔Router |
-| Copper Cross-Over (negro punteado) | PC↔PC, Switch↔Switch |
-| Serial DTE/DCE (celeste) | Router↔Router (WAN) |
-
----
-
-## 5. Configuración del Router
-
-### Router 2911 — interfaz LAN
-
-```
-Router> enable
-Router# configure terminal
-Router(config)# hostname R1
-
-R1(config)# interface GigabitEthernet0/0
-R1(config-if)# ip address 192.168.1.1 255.255.255.0
-R1(config-if)# no shutdown
-R1(config-if)# exit
-
-R1(config)# end
-R1# write memory
-```
-
-### Router 1841/2811 — interfaz FastEthernet
-
-```
-Router(config)# interface FastEthernet0/0
-Router(config-if)# ip address 192.168.1.1 255.255.255.0
-Router(config-if)# no shutdown
-```
-
-### Configurar dos subredes en el mismo router
-
-```
-R1(config)# interface GigabitEthernet0/0
-R1(config-if)# ip address 192.168.1.1 255.255.255.192
-R1(config-if)# no shutdown
-R1(config-if)# exit
-
-R1(config)# interface GigabitEthernet0/1
-R1(config-if)# ip address 192.168.1.65 255.255.255.192
-R1(config-if)# no shutdown
-R1(config-if)# exit
+Hosts = 2^n - 2
 ```
 
 ---
 
-## 6. Configuración del Switch
-
-El Switch 2960 funciona en **capa 2** y no necesita configuración para redes básicas. Solo conectá los cables.
-
-### Comandos útiles en el switch
+## 🧠 Ejemplo
 
 ```
-Switch> enable
-Switch# show mac address-table          — ver tabla MAC
-Switch# show interfaces status          — ver estado de puertos
-Switch# configure terminal
-Switch(config)# hostname SW1
-SW1(config)# end
-SW1# write memory
-```
-
-### Asignar IP de gestión al switch (opcional)
-
-```
-SW1(config)# interface Vlan1
-SW1(config-if)# ip address 192.168.1.2 255.255.255.0
-SW1(config-if)# no shutdown
-SW1(config-if)# exit
-SW1(config)# ip default-gateway 192.168.1.1
+/24 → 8 bits para hosts
+2^8 = 256 → 256 - 2 = 254 hosts
 ```
 
 ---
 
-## 7. Configuración de PCs
+## ✅ Recomendación para principiantes
 
-En Packet Tracer: **clic en la PC → Desktop → IP Configuration → Static**
-
-| Campo | Valor ejemplo |
-|---|---|
-| IP Address | 192.168.1.10 |
-| Subnet Mask | 255.255.255.0 |
-| Default Gateway | 192.168.1.1 |
-| DNS Server | 8.8.8.8 (opcional) |
-
-### Desde la terminal de la PC
+* Usa siempre:
 
 ```
-C:\> ipconfig              — ver IP actual
-C:\> ping 192.168.1.1      — probar conectividad al router
-C:\> ping 192.168.1.20     — probar conectividad a otra PC
+255.255.255.0 (/24)
+```
+
+✔ Fácil de entender
+✔ 254 dispositivos disponibles
+✔ Ideal para prácticas en Packet Tracer
+
+---
+
+## 🚀 Tip rápido
+
+| Necesitas...        | Usa       |
+| ------------------- | --------- |
+| Muchas PCs          | /24       |
+| Pocas PCs           | /27 o /28 |
+| Solo 2 dispositivos | /30       |
+
+---
+
+# 🔹 Qué hace la máscara de red
+
+* La máscara determina **qué IPs están en la misma red**.
+* Ejemplo: `192.168.1.1 /24` → ve todos los hosts de `192.168.1.1` a `192.168.1.254`.
+* Todo fuera de esa red necesita que el **router haga enrutamiento**.
+
+---
+
+# 🔧 Sección 2: Configurar IP en Router Cisco 2911
+
+## 🎯 Objetivo
+
+Asignar una dirección IP y máscara a una interfaz del router para conectar redes distintas.
+
+---
+
+## 🖥️ Pasos básicos en CLI
+
+1. Entrar al modo privilegiado:
+
+```
+enable
+```
+
+2. Entrar a configuración global:
+
+```
+configure terminal
+```
+
+3. Seleccionar la interfaz:
+
+```
+interface gigabitEthernet 0/0
+```
+
+4. Asignar IP y máscara:
+
+```
+ip address 192.168.1.1 255.255.255.0
+```
+
+5. Activar la interfaz:
+
+```
+no shutdown
+```
+
+6. Salir de la interfaz:
+
+```
+exit
 ```
 
 ---
 
-## 8. DHCP — IPs automáticas
-
-Configurá el router para que asigne IPs automáticamente a las PCs.
+## 💾 Guardar configuración
 
 ```
-R1(config)# ip dhcp pool LAN
-R1(dhcp-config)# network 192.168.1.0 255.255.255.0
-R1(dhcp-config)# default-router 192.168.1.1
-R1(dhcp-config)# dns-server 8.8.8.8
-R1(dhcp-config)# exit
-
-R1(config)# ip dhcp excluded-address 192.168.1.1 192.168.1.10
+copy running-config startup-config
 ```
 
-> `excluded-address` reserva IPs que no se asignarán (para el router, switches, servidores).
-
-En la PC: **IP Configuration → DHCP** — la IP se asigna sola.
-
-### Verificar DHCP
-
-```
-R1# show ip dhcp pool
-R1# show ip dhcp binding        — ver qué IP se asignó a cada MAC
-```
+* `write memory` también funciona, es la versión corta.
+* Si no guardas, la config se pierde al reiniciar.
 
 ---
 
-## 9. Verificación y diagnóstico
-
-### En el router
+## 🔍 Verificar configuración
 
 ```
-R1# show ip interface brief          — estado de todas las interfaces
-R1# show running-config              — configuración actual completa
-R1# show ip route                    — tabla de enrutamiento
-R1# show version                     — info del equipo
+show ip interface brief
 ```
 
-### Interpretando show ip interface brief
+👉 Debe mostrar:
 
-```
-Interface          IP-Address    OK? Method Status    Protocol
-GigabitEthernet0/0 192.168.1.1  YES manual up        up       ← OK
-GigabitEthernet0/1 unassigned   YES unset  admin down down     ← sin config
-```
-
-| Status / Protocol | Significado |
-|---|---|
-| up / up | Enlace activo — correcto |
-| up / down | Problema de capa 2 (cable, otro extremo) |
-| admin down / down | Interface apagada — falta `no shutdown` |
-
-### Indicadores de cable en Packet Tracer
-
-| Color | Significado |
-|---|---|
-| 🟢 Verde | Enlace activo |
-| 🔴 Rojo | Problema — interface apagada o cable incorrecto |
-| 🟡 Naranja | Negociando — esperar unos segundos |
+* IP asignada
+* Estado: up
 
 ---
 
-## 10. Comandos útiles
+## 🔹 Reglas para subredes en router
 
-### Navegación entre modos
-
-```
-Router>           — modo usuario (solo lectura)
-Router> enable    — entrar a modo privilegiado
-Router#           — modo privilegiado
-Router# configure terminal   — entrar a configuración global
-Router(config)#   — modo configuración global
-Router(config)# interface Gi0/0   — entrar a configurar interfaz
-Router(config-if)#
-Router(config-if)# end     — volver a modo privilegiado
-Router# exit               — salir
-```
-
-### Abreviaciones aceptadas por IOS
-
-| Comando completo | Abreviación |
-|---|---|
-| `enable` | `en` |
-| `configure terminal` | `conf t` |
-| `interface GigabitEthernet0/0` | `int gi0/0` |
-| `interface FastEthernet0/0` | `int fa0/0` |
-| `no shutdown` | `no sh` |
-| `show ip interface brief` | `sh ip int br` |
-| `write memory` | `wr` |
-
-### Guardar configuración
-
-```
-R1# write memory
-— o —
-R1# copy running-config startup-config
-```
-
-> Si no guardás, la configuración se pierde al reiniciar.
+* Cada interfaz = **una red diferente**
+* Misma máscara, diferente número de red → ✅ subred válida
+* Misma máscara, mismo número de red → ❌ confusión
+* Diferente máscara → solo si sabes subnetting avanzado
 
 ---
 
-*Guía elaborada para Cisco Packet Tracer — modelos 2911 y 2960-24TT*
+## 🔹 Ejemplo práctico con 2 redes
+
+| Interfaz | IP          | Máscara       | Red         |
+| -------- | ----------- | ------------- | ----------- |
+| G0/0     | 192.168.1.1 | 255.255.255.0 | 192.168.1.0 |
+| G0/1     | 192.168.2.1 | 255.255.255.0 | 192.168.2.0 |
+
+* Ahora sí son **2 redes separadas**
+* Router puede enrutar entre ellas
+* PCs en cada red usan como gateway la IP de su interfaz correspondiente
+
+---
+
+## 🧠 Tip clave
+
+* IP = “dirección del dispositivo”
+* Máscara = “qué parte del vecindario pertenece a la misma red”
+* Router = “conecta vecindarios distintos”
+
+---
