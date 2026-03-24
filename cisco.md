@@ -1,16 +1,16 @@
-# 📡 Redes Básicas – Máscaras y Configuración en Router
+# 📡 Redes Básicas – Cisco Packet Tracer
 
 ---
 
-# 🔹 Sección 1: Máscaras de Subred y Hosts Disponibles
+## 🔹 Sección 1: Máscaras de Subred y Hosts Disponibles
 
-## 🧠 Concepto
+### 🧠 Concepto
 
-La máscara de subred define cuántos dispositivos (hosts) pueden existir en una red y qué rango de IPs pertenece a la misma red.
+La **máscara de subred** define cuántos dispositivos (hosts) pueden existir en una red y qué rango de IPs pertenece a la misma red.
 
 ---
 
-## 📊 Tabla de Máscaras Comunes
+### 📊 Tabla de Máscaras Comunes
 
 | Máscara de Subred | CIDR | Hosts Disponibles | Rango de IPs por Red          |
 | ----------------- | ---- | ----------------- | ----------------------------- |
@@ -26,14 +26,12 @@ La máscara de subred define cuántos dispositivos (hosts) pueden existir en una
 
 ---
 
-## 🔥 Regla Importante
+### 🔹 Regla Importante
 
-* Siempre se restan 2 direcciones:
+* Se restan 2 direcciones:
 
-  * 1 para la red
-  * 1 para broadcast
-
-👉 Fórmula:
+  * 1 para la **red**
+  * 1 para **broadcast**
 
 ```
 Hosts = 2^n - 2
@@ -41,56 +39,15 @@ Hosts = 2^n - 2
 
 ---
 
-## 🧠 Ejemplo
+## 🔹 Sección 2: Configurar IP en Router Cisco 2911
 
-```
-/24 → 8 bits para hosts
-2^8 = 256 → 256 - 2 = 254 hosts
-```
+### 🎯 Objetivo
 
----
-
-## ✅ Recomendación para principiantes
-
-* Usa siempre:
-
-```
-255.255.255.0 (/24)
-```
-
-✔ Fácil de entender
-✔ 254 dispositivos disponibles
-✔ Ideal para prácticas en Packet Tracer
+Asignar dirección IP y máscara a una interfaz del router para conectar redes distintas.
 
 ---
 
-## 🚀 Tip rápido
-
-| Necesitas...        | Usa       |
-| ------------------- | --------- |
-| Muchas PCs          | /24       |
-| Pocas PCs           | /27 o /28 |
-| Solo 2 dispositivos | /30       |
-
----
-
-# 🔹 Qué hace la máscara de red
-
-* La máscara determina **qué IPs están en la misma red**.
-* Ejemplo: `192.168.1.1 /24` → ve todos los hosts de `192.168.1.1` a `192.168.1.254`.
-* Todo fuera de esa red necesita que el **router haga enrutamiento**.
-
----
-
-# 🔧 Sección 2: Configurar IP en Router Cisco 2911
-
-## 🎯 Objetivo
-
-Asignar una dirección IP y máscara a una interfaz del router para conectar redes distintas.
-
----
-
-## 🖥️ Pasos básicos en CLI
+### 🖥️ Pasos básicos en CLI
 
 1. Entrar al modo privilegiado:
 
@@ -104,82 +61,148 @@ enable
 configure terminal
 ```
 
-3. Seleccionar la interfaz:
+3. Seleccionar interfaz y asignar IP:
 
 ```
-interface gigabitEthernet 0/0
-```
-
-4. Asignar IP y máscara:
-
-```
+interface gigabitEthernet0/0
 ip address 192.168.1.1 255.255.255.0
-```
-
-5. Activar la interfaz:
-
-```
 no shutdown
-```
+exit
 
-6. Salir de la interfaz:
-
-```
+interface gigabitEthernet0/1
+ip address 192.168.2.1 255.255.255.0
+no shutdown
 exit
 ```
 
----
-
-## 💾 Guardar configuración
+4. Salvar configuración:
 
 ```
 copy running-config startup-config
 ```
 
-* `write memory` también funciona, es la versión corta.
-* Si no guardas, la config se pierde al reiniciar.
+* También funciona `write memory`.
 
 ---
 
-## 🔍 Verificar configuración
+### 🔹 Verificación de interfaces
 
 ```
 show ip interface brief
 ```
 
-👉 Debe mostrar:
-
-* IP asignada
-* Estado: up
+* **Status = up / Protocol = up** → interfaz lista
+* **Administratively down** → interfaz apagada (`shutdown`)
 
 ---
 
-## 🔹 Reglas para subredes en router
-
-* Cada interfaz = **una red diferente**
-* Misma máscara, diferente número de red → ✅ subred válida
-* Misma máscara, mismo número de red → ❌ confusión
-* Diferente máscara → solo si sabes subnetting avanzado
-
----
-
-## 🔹 Ejemplo práctico con 2 redes
+### 🔹 Ejemplo de tabla de redes en router
 
 | Interfaz | IP          | Máscara       | Red         |
 | -------- | ----------- | ------------- | ----------- |
 | G0/0     | 192.168.1.1 | 255.255.255.0 | 192.168.1.0 |
 | G0/1     | 192.168.2.1 | 255.255.255.0 | 192.168.2.0 |
 
-* Ahora sí son **2 redes separadas**
-* Router puede enrutar entre ellas
-* PCs en cada red usan como gateway la IP de su interfaz correspondiente
+* Cada interfaz corresponde a **una red distinta**
+* Router enruta automáticamente entre ellas
 
 ---
 
-## 🧠 Tip clave
+## 🔹 Sección 3: Configurar DHCP en Router Cisco 2911
 
-* IP = “dirección del dispositivo”
-* Máscara = “qué parte del vecindario pertenece a la misma red”
-* Router = “conecta vecindarios distintos”
+### 🧠 Concepto
+
+* **DHCP** = Dynamic Host Configuration Protocol
+* Permite que PCs obtengan automáticamente: IP, máscara, gateway y DNS.
+
+---
+
+### 🔧 Pasos de configuración básica
+
+1. Crear un pool DHCP:
+
+```
+ip dhcp pool RED1
+```
+
+2. Asignar red y máscara:
+
+```
+network 192.168.1.0 255.255.255.0
+```
+
+3. Asignar gateway (default router):
+
+```
+default-router 192.168.1.1
+```
+
+4. (Opcional) Configurar DNS:
+
+```
+dns-server 8.8.8.8
+exit
+```
+
+5. Excluir IPs que no quieres que DHCP asigne:
+
+```
+ip dhcp excluded-address 192.168.1.1 192.168.1.5
+```
+
+---
+
+### 🔹 Verificar DHCP
+
+```
+show ip dhcp binding
+show running-config
+```
+
+* En las PCs, configurar **Obtain IP automatically** → verificar con `ipconfig`.
+
+---
+
+## 🔹 Sección 4: Verificar conexiones y puertos
+
+### 1️⃣ Router
+
+```
+show ip interface brief
+```
+
+* Muestra IPs, estado y protocolo
+
+### 2️⃣ Switch
+
+```
+show interfaces status
+```
+
+* Muestra qué puertos están conectados (`connected`), velocidad, VLAN
+
+```
+show cdp neighbors
+```
+
+* Muestra dispositivos conectados a cada puerto (útil para verificar Router ↔ Switch)
+
+---
+
+### 🔹 Tips finales
+
+* Cada PC necesita **su gateway correcto** para comunicarse con otra red
+* Router con interfaces activas enruta entre redes automáticamente
+* Switch capa 2 solo mueve tráfico dentro de la misma VLAN
+
+---
+
+## 🔹 Resumen de laboratorio funcional
+
+1. **Router 2911** → G0/0 = 192.168.1.1 /24, G0/1 = 192.168.2.1 /24
+2. **Switch 1 → PC1** → IP 192.168.1.2 /24, gateway 192.168.1.1
+3. **Switch 2 → PC2** → IP 192.168.2.2 /24, gateway 192.168.2.1
+4. Ping funciona entre PCs y routers ✅
+5. DHCP opcional para asignar IPs automáticas ✅
 
 ---
