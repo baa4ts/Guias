@@ -186,23 +186,3 @@ show cdp neighbors
 ```
 
 * Muestra dispositivos conectados a cada puerto (útil para verificar Router ↔ Switch)
-
----
-
-### 🔹 Tips finales
-
-* Cada PC necesita **su gateway correcto** para comunicarse con otra red
-* Router con interfaces activas enruta entre redes automáticamente
-* Switch capa 2 solo mueve tráfico dentro de la misma VLAN
-
----
-
-## 🔹 Resumen de laboratorio funcional
-
-1. **Router 2911** → G0/0 = 192.168.1.1 /24, G0/1 = 192.168.2.1 /24
-2. **Switch 1 → PC1** → IP 192.168.1.2 /24, gateway 192.168.1.1
-3. **Switch 2 → PC2** → IP 192.168.2.2 /24, gateway 192.168.2.1
-4. Ping funciona entre PCs y routers ✅
-5. DHCP opcional para asignar IPs automáticas ✅
-
----
